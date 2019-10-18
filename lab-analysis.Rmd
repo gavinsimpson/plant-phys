@@ -1,0 +1,201 @@
+---
+title: Plant Phys Lab
+author: Gavin Simpson and Maria Davis
+date: October 2019
+output:
+  html_document:
+    theme: united
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+---
+
+# Getting started
+
+## Installing R Packages
+
+```{r install-pkgs, eval = FALSE}
+install.packages(c('readxl', 'tidyr', 'dplyr', 'forcats', 'ggplot2', 'emmeans'))
+```
+
+Now listen to the introductory presentation where we'll describe the analysis you are about to do.
+
+# Load Packages
+
+We need to load the packages we just installed so they are ready to use. You need to do this each time you start R and want to use these packages. The installation step you just performed does *not* need to be each time you start R.
+
+```{r load-packages}
+library('readxl')  # read from Excel sheets
+library('tidyr')   # data processing
+library('dplyr')   # mo data processing
+library('forcats') # mo mo data processing
+library('ggplot2') # plotting
+library('emmeans') # for post hoc comparisons
+
+## Set plot theme
+theme_set(theme_bw())
+```
+
+# Load Data
+
+The data exist in an Excel workbook. The example data are in two of the sheets in this workbook. First we'll read in the data for the wild type cultivar using the `read_excel()` function
+
+```{r load-data}
+## "http://bit.ly/plantphys19"
+wt <- read_excel('f18ph.xls', sheet = 1)
+```
+
+If there were no errors or messages printed to the screen then the data were loaded into R. Take a look at the data by typing the name of the object (`wt`) and hitting `Return`
+
+```{r look-at-wt}
+wt
+```
+
+Your data should look similar to the output above. Namely, the example data are in a data frame with `r nrow(wt)` rows and `r ncol(wt)` columns.
+
+The column names contain *data*; we want to extract the variable (`height`, `internodes` etc) as well as the day of each observation from the column names. The variable name and the day of observation are separated by a colon `:` in each column name.
+
+The data are also in what we call *wide* format --- where multiple observations are in a row --- but to fit a statistical model we need them in *long* format --- where each row corresponds to a single observation.
+
+We need to convert the data into *long* format and extract the variable and day information from the column names as we do do the conversion. This opertation of going from *wide* to *long* (or the reverse) is more commonly known as a *pivot*.
+
+The first three columns don't contain data (actual measurements). These columns are useful meta data, but we do not need to pivot those columns, so we'll exclude them from the pivot.
+
+As we want to pivot to the *long* format we use the `pivot_longer()` function. In the code block below we pass five arguments:
+
+1. `wt` --- this is the name of the object we want to pivot,
+2. `-(treatment:plantid)` --- we don't want to pivot those columns, so we *exclude* them by name
+3. `names_to = c('variable','day')` --- we want to create new columns with the names *variable* and *day*
+4. `names_sep = ':'` --- the variable name and day information are in the column names separated by `:`
+5. `names_ptypes = list(day = integer())` --- we want the created `day` column to contain integer values not text
+
+```{r pivot-wt}
+wt <- pivot_longer(wt,
+                      -(treatment:plantid),
+                      names_to = c('variable','day'),
+                      names_sep = ':',
+                      names_ptypes = list(day = integer()))
+```
+
+Take a look at what we have created
+
+```{r look-wt-long}
+wt
+```
+
+Now we have some new columns in addition to the three columns we *did not* pivot
+
+1. `variable` --- what was measured?
+2. `day` --- when was is measured?
+3. `value` --- what value did you write down for this measurement?
+
+We have one more data processing step to perform to get the require format for the analysis. We want separate columns for the different types of variable we measured. At the moment these are all contained in the single column `variable`. To get the format we want, we need to pivot from this long format back to a wide format, which we do using the `pivot_wider()` function.
+
+As well as the name of the object we want to pivot (`wt`), we have to tell `pivot_wider()` which column contains the information for the new column names (the `names_from` argument), and which column contains the data or values (the `values_from` argument). Remember that the `variable` column contains the names of each variable you measured amd the `value` column contains the measurement values.
+
+```{r pivot-wt-wider}
+wt <- pivot_wider(wt, names_from = variable, values_from = value)
+```
+
+Look at the result
+
+```{r look-wt-wider}
+wt
+```
+
+We now have columns of data for `height`, `internodes`, & `freshwt`. The `NA` values in `freshwt` are indicators of *missing* *data* because you only measured the fresh weight of the plants on day 21.
+
+To load in the dwarf cultivar data we repeat these steps
+
+1. reading in the data,
+2. pivotting from wide to long format and extracting the variable name and day information from the column headers
+3. pivoting from long to wide format to create a column of data for each of three variables you measured
+
+```{r load-pivot-dwarf}
+dwarf <- read_xls('f18ph.xls', sheet = 4)
+dwarf <- pivot_longer(dwarf, -(1:3), names_sep = ':',
+                      names_to = c('variable','day'),
+                      names_ptypes = list(day = integer()))
+dwarf <- pivot_wider(dwarf, names_from = variable, values_from = value)
+dwarf
+```
+
+Now that we have the data as we'd like it, we need to stick the two objects together, which we do with `bind-rows()`
+
+```{r bind-cultivars}
+plant <- bind_rows(wt, dwarf)
+```
+
+```{r plant-id}
+plant <- mutate(plant, id = paste0(cultivar, "_", treatment, "_", plantid))
+```
+
+One final data processing step involves getting the coding for the `treatment` variable right so that the *control* treatment is the reference level against which the other treatments will be compared. Changing the reference level of a factor (a categorical variable) is known as *releveling*. We change the reference levels using
+
+```{r relevel-treatment}
+plant <- mutate(plant, treatment = fct_relevel(treatment, 'control'))
+```
+
+# Data analysis
+
+Ok, that's a lot of data processing. Let's look at the data
+
+## Plant Height
+
+We can plot the plant height data over time using the following code
+
+```{r plot-height-data}
+ggplot(plant, aes(x = day, y = height, group = id, colour = treatment)) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~ cultivar) +
+    labs(y = 'Height (cm)', x = 'Day', colour = 'Treatment')
+```
+
+**What to explain about this code**
+
+The model we are fitting is a special case of a linear model, which in R can be fitted using the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
+
+    height ~ day * treatment * cultivar
+
+The response (dependent) variable is on the left hand side of the `~` (the tilde symbol)/ This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. Here, the independent variables represent the experimental setup.
+
+Given our experimental design, the most complex model we can fit is one that allows for different growth rates (effects of `day`) for each treatment level for each cultivar. In other words we want to have a different growth rate for each combination of treatment and cultivar.
+
+Such a model implies a three-way interaction between `day`, `treatment`, and `cultivar`. We indicate interactions in the formula using the `*` symbol.
+
+```{r fit-model}
+h1 <- lm(height ~ day * treatment * cultivar, data = plant)
+```
+
+We can summarise the model to look for some key diagnostics of the fit
+
+```{r height-summary}
+summary(h1)
+```
+
+This isn't very helpful, except perhaps the omnibus *F* test which indicates if the total variance explained by all the model terms is significantly large relative to the unexplained variance.
+
+To get more interpretable
+
+```{r treatment-v-control-by-cultivar}
+h1mm <- emtrends(h1, trt.vs.ctrl ~ treatment | cultivar, var = "day")
+h1mm
+```
+
+```{r plot-treatment-v-control-by-cultivar}
+plot(h1mm, comparisons = TRUE)
+```
+
+```{r other}
+emmip(h1, treatment ~ day | cultivar, cov.reduce = FALSE, CIs = TRUE)
+
+emtrends(h1, pairwise ~ treatment | cultivar, var = "day")
+
+emtrends(h1, pairwise ~ cultivar | treatment, var = "day")
+
+emmip(h1, cultivar ~ day | treatment, cov.reduce = FALSE, CIs = TRUE)
+```
