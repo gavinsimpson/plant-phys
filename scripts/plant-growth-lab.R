@@ -138,18 +138,18 @@ ggplot(plant, aes(x = treatment, y = freshwt, colour = cultivar)) +
     geom_boxplot() +
     labs(y = 'Fresh weight (g)', x = 'Treatment')
 
-f1 <- lm(freshwt ~ cultivar + treatment + cultivar:treatment,
+fw1 <- lm(freshwt ~ cultivar + treatment + cultivar:treatment,
          data = plant)
-summary(f1)
+summary(fw1)
 
-f1mm <- emmeans(f1, trt.vs.ctrl ~ treatment | cultivar)
-f1mm
-plot(f1mm, comparisons = TRUE)
+fw1mm <- emmeans(fw1, trt.vs.ctrl ~ treatment | cultivar)
+fw1mm
+plot(fw1mm, comparisons = TRUE)
 
-emmip(f1, treatment ~ cultivar, CIs = TRUE)
+emmip(fw1, treatment ~ cultivar, CIs = TRUE)
 
-emmeans(f1, pairwise ~ treatment | cultivar)
+emmeans(fw1, pairwise ~ treatment | cultivar)
 
-emmeans(f1, pairwise ~ cultivar | treatment)
+emmeans(fw1, pairwise ~ cultivar | treatment)
 
-emmip(f1, cultivar ~ treatment, CIs = TRUE)
+emmip(fw1, cultivar ~ treatment, CIs = TRUE)
