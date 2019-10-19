@@ -1,6 +1,6 @@
 ---
-title: Plant Phys Lab
-author: Gavin Simpson and Maria Davis
+title: Plant Physiology Lab
+author: Dr. Gavin Simpson and Dr. Maria Davis
 date: October 2019
 output:
   html_document:
@@ -10,15 +10,18 @@ output:
     toc_float:
       collapsed: false
       smooth_scroll: false
-    toc_depth: 2
+    toc_depth: 3
 ---
 
 # Getting started
 
+To get started, open your web browser, head to [rstudio.cloud]() and log in using your RStudio Cloud account.
+
 ## Installing R Packages
 
 ```{r install-pkgs, eval = FALSE}
-install.packages(c('readxl', 'tidyr', 'dplyr', 'forcats', 'ggplot2', 'emmeans'))
+install.packages(c('readxl', 'tidyr', 'dplyr', 'forcats',
+                   'ggplot2', 'emmeans'))
 ```
 
 Now listen to the introductory presentation where we'll describe the analysis you are about to do.
@@ -48,7 +51,7 @@ The data exist in an Excel workbook. The example data are in two of the sheets i
 wt <- read_excel('f18ph.xls', sheet = 1)
 ```
 
-If there were no errors or messages printed to the screen then the data were loaded into R. Take a look at the data by typing the name of the object (`wt`) and hitting `Return`
+If there were no errors or messages printed to the screen then the data were loaded into R. Take a look at the data by typing the name of the object (`wt`) and hitting <kbd>Return</kbd>
 
 ```{r look-at-wt}
 wt
@@ -58,11 +61,23 @@ Your data should look similar to the output above. Namely, the example data are 
 
 The column names contain *data*; we want to extract the variable (`height`, `internodes` etc) as well as the day of each observation from the column names. The variable name and the day of observation are separated by a colon `:` in each column name.
 
+## Data formats
+
 The data are also in what we call *wide* format --- where multiple observations are in a row --- but to fit a statistical model we need them in *long* format --- where each row corresponds to a single observation.
 
-We need to convert the data into *long* format and extract the variable and day information from the column names as we do do the conversion. This opertation of going from *wide* to *long* (or the reverse) is more commonly known as a *pivot*.
+```{r include-wide-long-image, echo = FALSE}
+knitr::include_graphics('./images/original-dfs-tidy.png')
+```
+
+## Pivoting
+
+We need to convert the data into *long* format and extract the variable and day information from the column names as we do do the conversion. This operation of going from *wide* to *long* (or the reverse) is more commonly known as a *pivot*.
 
 The first three columns don't contain data (actual measurements). These columns are useful meta data, but we do not need to pivot those columns, so we'll exclude them from the pivot.
+
+```{r include-wide-long-gif, echo = FALSE}
+knitr::include_graphics('./images/tidyr-longer-wider.gif')
+```
 
 As we want to pivot to the *long* format we use the `pivot_longer()` function. In the code block below we pass five arguments:
 
@@ -74,10 +89,10 @@ As we want to pivot to the *long* format we use the `pivot_longer()` function. I
 
 ```{r pivot-wt}
 wt <- pivot_longer(wt,
-                      -(treatment:plantid),
-                      names_to = c('variable','day'),
-                      names_sep = ':',
-                      names_ptypes = list(day = integer()))
+                   -(treatment:plantid),
+                   names_to = c('variable','day'),
+                   names_sep = ':',
+                   names_ptypes = list(day = integer()))
 ```
 
 Take a look at what we have created
@@ -94,7 +109,7 @@ Now we have some new columns in addition to the three columns we *did not* pivot
 
 We have one more data processing step to perform to get the require format for the analysis. We want separate columns for the different types of variable we measured. At the moment these are all contained in the single column `variable`. To get the format we want, we need to pivot from this long format back to a wide format, which we do using the `pivot_wider()` function.
 
-As well as the name of the object we want to pivot (`wt`), we have to tell `pivot_wider()` which column contains the information for the new column names (the `names_from` argument), and which column contains the data or values (the `values_from` argument). Remember that the `variable` column contains the names of each variable you measured amd the `value` column contains the measurement values.
+As well as the name of the object we want to pivot (`wt`), we have to tell `pivot_wider()` which column contains the information for the new column names (the `names_from` argument), and which column contains the data or values (the `values_from` argument). Remember that the `variable` column contains the names of each variable you measured and the `value` column contains the measurement values.
 
 ```{r pivot-wt-wider}
 wt <- pivot_wider(wt, names_from = variable, values_from = value)
@@ -111,7 +126,7 @@ We now have columns of data for `height`, `internodes`, & `freshwt`. The `NA` va
 To load in the dwarf cultivar data we repeat these steps
 
 1. reading in the data,
-2. pivotting from wide to long format and extracting the variable name and day information from the column headers
+2. pivoting from wide to long format and extracting the variable name and day information from the column headers
 3. pivoting from long to wide format to create a column of data for each of three variables you measured
 
 ```{r load-pivot-dwarf}
@@ -139,11 +154,128 @@ One final data processing step involves getting the coding for the `treatment` v
 plant <- mutate(plant, treatment = fct_relevel(treatment, 'control'))
 ```
 
-# Data analysis
+OK, that's a lot of data processing. Let's look at the data.
 
-Ok, that's a lot of data processing. Let's look at the data
+# Fresh weight on day 21
 
-## Plant Height
+We'll start by taking a look at the fresh weight of the plants on day 21. One way to look at these data is as box plots of the weights for each combination of `cultivar` and `treatment`. To plot the data we'll use the powerful **ggplot2** package and the function `ggplot()`. TO draw our plot we need to tell `ggplot()` the following information
+
+1. the name of the object that contains the data we want to plot; in our case this is `plant`
+2. we need to *map* variables in `plant` to the axes and other visual attributes, here `colour`
+    * we want the `treatment` data on the *x* axis,
+	* we want the plant fresh weights (`freshwt`) on the *y* axis,
+	* we want to distinguish between the wild type and dwarf cultivar using colour
+3. we need to add a layer to the plot that actually draws the box plots using `geom_boxplot()`, and
+4. we need to add some proper axis labels, using `labs()`
+
+Notice how we add layers and features to the plot using the `+` operator at the end of statement.
+
+```{r fresh-wt-boxplot}
+ggplot(data = plant, mapping = aes(x = treatment, y = freshwt, colour = cultivar)) +
+    geom_boxplot() +
+    labs(y = 'Fresh weight (g)', x = 'Treatment', colour = "Cultivar")
+```
+
+You can ignore the *warning* about removing some rows with missing data. If you get other warnings or your plot doesn't look similar to the one above, double check your code for typos and if you're still stuck as for help.
+
+Look at the plot you just drew and think about what the data might be telling you about
+
+* how the various treatments might have affected the fresh weight (as a surrogate for plant biomass or size),
+* whether all the treatments affected the plants in the same way, and
+* whether the treatments affected the two cultivars in similar or different ways?
+
+## ANOVA
+
+The way we plotted the data gives us a guide as to how to approach answering the questions you were just asked to think about. We have a *response* variable --- the fresh weight of each plant on day 21, `freshwt` --- also known as the *dependent* variable. We also have two *independent* variables that define the experimental design:
+
+1. the various control and treatments applied to the plants, `treatment`, and
+2. the type of cultivar that each plant belongs to.
+
+The model we want to fit is a special case of a linear model that is commonly known as an *analysis of variance* or *ANOVA*. An ANOVA is a model where the independent variables are categorical variables. In R, categorical variables are known as *factors*). Using R we can fit the ANOVA with the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
+
+    freshwt ~ treatment * cultivar
+
+The response (dependent) variable is on the left hand side of the `~` (the tilde symbol). This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. We want to allow for *different* effects of the various treatments among the two cultivars --- gibberellic acid might affect the dwarf cultivar more than the wild type, for example. To achieve this we in addition to the *main effects* of `treatment` and `cultivar` we need to have the effects of the treatments *interact* with the effects of the cultivar. In R we indicate that we want main effects plus their interaction using the `*` symbol. The only other thing we need to tell R is where to find the variables named in the formula describing the model we want to fit --- we do this using the `data` argument.
+
+Let's fit the ANOVA
+
+```{r fit-freshwt-anova}
+fw1 <- lm(freshwt ~ cultivar * treatment, data = plant)
+```
+
+We have stored the result of the ANOVA fit in an object named `fw1`. We can summarize the model fit in a couple of ways; first we look at the model summary
+
+```{r freshwt-summary}
+summary(fw1)
+```
+
+```{r freshwt-summary-saved, echo = FALSE}
+summ <- summary(fw1)
+fstats <- summ$fstatistic
+```
+
+The omnibus (overall) test of the model is summarized in the *F* statistic and its *p* value. Find this information in the output. In the example shown here, the *F* statistic is `r round(fstats[1], 2)` on `r fstats[2]` and `r fstats[3]` degrees of freedom, with a *p* value of `r format.pval(pf(fstats[1], fstats[2], fstats[3], lower.tail = FALSE), eps = 0.0001, scientific = FALSE)`. This *p* value indicates that it would quite unlikely --- less than 1 in 10,000 --- that we would have observed these differences between cultivars and treatments if there were *no differences* between cultivars and treatments.
+
+This test gives us some gross information about the combined effects of the treatments on the cultivars, but it doesn't provide much detail on which treatments differ and whether there are different treatment effects in the two cultivars. To answer these questions we'll need to do some further processing of the model to compute what are known as *estimated marginal means*.
+
+## Treatments vs controls
+
+The first test might do is to compare each treatment with the control plants. This involves calculating from the model the *difference* between each level of the treatment and the control. These estimated differences are uncertain so we can express this uncertainty using a confidence interval. Additionally we can do a statistical test of the null hypothesis that the difference is equal to **0** --- which is the same as testing the null hypothesis of equal effects. Because the treatment effect is *nested* within the cultivar effect, we will estimate the difference separately for each cultivar.
+
+```{r fw-trt-ctrl-emm}
+fw1mm <- emmeans(fw1, trt.vs.ctrl ~ treatment | cultivar)
+```
+
+We saved the result of the `emmeans()` in an object named `fw1mm`. To show the estimated marginal means we type the name of the object and hit <kbd>Return</kbd>
+
+```{r print-fw-trt-ctrl-emm}
+fw1mm
+```
+
+The output is in two parts:
+
+1. `$emmeans` shows the estimated marginal means of `freshwt` for each level of `treatment` in each of the two cultivars, and
+2. `$contrasts` shows the comparison between each treatment level and the control, separately for each cultivar.
+
+In the first part (`$emmeans`) the column labelled `emmean` is the estimated marginal mean for each level of the treatment, whilst `SE` is the standard error --- a measure of uncertainty in the estimated value --- of the `emmean`. The `df` column indicates the degrees of freedom for each of the groupings, and the columns labelled `lower.CL` and `upper.CL` contain the lower and upper limits of the confidence interval, for the stated confidence level (here is it the 95% or 0.95 level). The confidence interval is calculated using the `SE` data, with the interval representing the range of uncertainty in the estimated marginal means.
+
+How do you interpret this? Well, the `emmean` columns are the estimated *average* fresh weight of a plant from that particular cultivar under each of the treatments. In the example we can see that treatment with the largest fresh weight for the dwarf cultivar is the `ga10` treatment, whilst it is the `ga75` treatment level in the wild type. In the dwarf cultivar we see that the estimated average fresh weight of a plant treated with `b9` is slightly *lower* than the average for the control plants.
+
+The kind of comparisons we just made are relatively informal. The `$contrasts` part of the output shows results of more formal comparisons with actual statistical tests comparing each treatment with the control. Note that the *p* values have been adjusted to account for there being *three* tests in each cultivar --- this means the results shown account for the uncertainty that arises due to doing multiple tests.
+
+Look at the *p* values. Are any of the comparisons between treatment and control significantly different from 0 (assume a 95% or 0.95 level of confidence)?
+
+We can plot the estimate marginal means using the `plot()` method, which might make it easier to see what the table of results means:
+
+```{r plot-trt-ctrl-emms}
+plot(fw1mm, comparisons = TRUE)
+```
+
+The plot shows the values from the `emmean` column as the black points, while the confidence interval is represented by the pale blue bars. The red arrows are *comparison arrows*, which ere added using `comparisons = TRUE`. Take a pair of points; whether the arrows overlap is an *approximate* indication of whether, at the 95% or 0.95 level, the pair of points are *significantly different from one another*. If the arrows *do not* overlap for a pair of points we can conclude that the mean fresh weight of the plants is different between the pair of treatments.
+
+## Pairwise comparisons
+
+We can do the statistical tests implied by the *comparison arrows* using the `emmeans()` function but asking for *pairwise comparisons* instead of *treatment vs control* comparisons. This is done using the `pairwise` option. 
+
+```{r fw-pairwise-by-cultivar}
+emmeans(fw1, pairwise ~ treatment | cultivar)
+```
+
+Again we get the two types of output and the `$emmeans` part is identical to the one we saw before (we're estimating the same marginal mean fresh weight for each treatment). What is different is the `$contrasts` section, which now contains comparisons between all pairs of treatments for each cultivar. Again the *p* values have been adjusted to account for the multiple tests that were performed.
+
+**Are any of the pairwise comparisons significantly different?**
+
+We can compare differences between cultivars for each level of the treatment using a similar approach:
+
+```{r fw-pairwise-by-treatment}
+emmeans(fw1, pairwise ~ cultivar | treatment)
+```
+
+This time we get a different `$emmeans` section as we are now estimating the marginal mean fresh weight for each cultivar, for each level of the treatment. The `$contrasts` section now contains a single comparison for each treatment level as we only have a single pair of cultivars.
+
+**Are any of these pairwise comparisons significantly different?**  **What does this suggest about the effects of the treatment and the cultivar on the fresh weight of the plants?**
+
+# Plant height
 
 We can plot the plant height data over time using the following code
 
@@ -155,13 +287,22 @@ ggplot(plant, aes(x = day, y = height, group = id, colour = treatment)) +
     labs(y = 'Height (cm)', x = 'Day', colour = 'Treatment')
 ```
 
-**What to explain about this code**
+As before, we specify the data and the mapping of variables to axes and the colour channel. One difference here is that as we want to group the data for each plant and draw lines through the observations to better show how the height of each plant changed over time. We indicate this grouping via the `group` aesthetic, which we set to the `id` variable we created earlier.
 
-The model we are fitting is a special case of a linear model, which in R can be fitted using the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
+This plot has two layers:
+
+1. a point layer (`geom_point()`), and
+2. a line layer (`geom_line()`)
+
+We also draw the data for the two cultivars in it's own panel, which *ggplot* calls *faceting*. The final line adds some nice labels to the plot.
+
+## ANCOVA
+
+The model we are fitting is sometimes called an *analysis of covariance* or ANCOVA, which is another special case of a linear model that can also be fitted using the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
 
     height ~ day * treatment * cultivar
 
-The response (dependent) variable is on the left hand side of the `~` (the tilde symbol)/ This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. Here, the independent variables represent the experimental setup.
+The response (dependent) variable is on the left hand side of the `~` (the tilde symbol). This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. Here, the independent variables represent the experimental setup.
 
 Given our experimental design, the most complex model we can fit is one that allows for different growth rates (effects of `day`) for each treatment level for each cultivar. In other words we want to have a different growth rate for each combination of treatment and cultivar.
 
@@ -171,31 +312,87 @@ Such a model implies a three-way interaction between `day`, `treatment`, and `cu
 h1 <- lm(height ~ day * treatment * cultivar, data = plant)
 ```
 
-We can summarise the model to look for some key diagnostics of the fit
+We can summarize the model to look for some key diagnostics of the fit
 
 ```{r height-summary}
 summary(h1)
 ```
 
-This isn't very helpful, except perhaps the omnibus *F* test which indicates if the total variance explained by all the model terms is significantly large relative to the unexplained variance.
+Most of this isn't very helpful in this state, except the omnibus *F* test which indicates if the total variance explained by all the model terms is significantly large relative to the unexplained variance.
 
-To get more interpretable
+## Treatments vs controls
+
+To get more interpretable output we will again use estimate marginal means, but with one slight difference; this time we are interested in the linear effect of `day`, a continuous variable, as well as the treatment and cultivar effects. The `day` effect will be represented by straight lines (regression lines), the slopes of which reflect the average growth rate of plants in the combinations of treatments and cultivars. These lines are often called *trends*, and hence we use the `emtrends()` function to estimate the marginal trends instead of the marginal means.
+
+As before we will start by comparing the treated plants with the control plants. This time however we need to indicate the *trend* variable via argument `var`. In our case the trend variable is `day` (which is indicated by the name in quotes)
 
 ```{r treatment-v-control-by-cultivar}
 h1mm <- emtrends(h1, trt.vs.ctrl ~ treatment | cultivar, var = "day")
 h1mm
 ```
 
+You should be familiar with this output now. The `$emtrends` section contains similar outputs to the `$emmeans` sections we looked at earlier when analyzing the fresh weight of the plants. The main difference is in the interpretation of the numbers in the `day.trend` column, which replaces the `emmean` from before. The `day.trend` column contains estimates of the slope of the regression line for the `day` variable.
+
+The numbers in the column are the estimated *change in the height* of the plant for a single day of growth:
+
+* If the `day.trend` number is positive it means the plants in a treatment group increased in height over the experiment, and
+* if the `day.trend` number is negative it means the plants in a treatment group decreased in height over the experiment.
+
+The `$contrasts` section contains the same kind of comparisons of a treatments vs controls. Remember here that the `estimate` column contains the estimated difference in the slopes (growth rates) of the stated treatment and the control group. Hence the null hypothesis being tested is that the *difference in slopes is equal to zero*.
+
+* A negative value in the `estimate` column means the average change in height in the stated treatment was lower than in the control group. In other words, the plants in that treatment group grew *more slowly* on average than the plants in the control group, and
+* A positive value in the `estimate` column means the plants in the that treatment group grew, on average, at a faster rate than plants in the control group.
+
+As before, we can plot these estimated marginal trends using the `plot()` method:
+
 ```{r plot-treatment-v-control-by-cultivar}
 plot(h1mm, comparisons = TRUE)
 ```
 
-```{r other}
+This plot is similar to one we created earlier when we looked at the fresh weight of the plants:
+
+* the black points are the estimated growth rates (regression slopes) for each treatment group,
+* the 95% confidence interval around the estimated growth rate is shown by the pale blue bar, and
+* the red arrows are approximate pairwise comparison regions --- if arrows for a pair of treatments overlap one another we fail to reject the null hypothesis of equal growth rates for plants in the two treatments.
+
+The main difference in this plot is that we no longer show the estimated marginal mean on the *x* axis. Instead the slope of the regression line (the growth rate) is plotted on the *x* axis. Remember how we interpret these numbers: the values are the estimated *change*, on average, in the height of a plant in single day of growth.
+
+All this talk of estimated trends or slopes may be a little opaque, but we can plot the estimated regression lines to visualize the average growth rates of plants in each of the treatment groups using the `emmip()` function:
+
+```{r height-plot-estimated-slopes}
 emmip(h1, treatment ~ day | cultivar, cov.reduce = FALSE, CIs = TRUE)
+```
 
-emtrends(h1, pairwise ~ treatment | cultivar, var = "day")
+Here the formula means you want to show the `treatment` effects against `day` separately for each cultivar. The `cov.reduce = FALSE` part means that we want to plot for all values of `day` so that we get the full regression lines. Confidence intervals are added with `CIs = TRUE` --- if you want to turn them off use `CIs = FALSE`.
 
+## Pairwise comparisons
+
+If you want formal comparisons of the growth rates for all pairs of treatments, we can also do all pairwise comparisons using the `emtrends()` function by using the `pairwise` option instead of `trt-vs-ctrl`. Firstly, we'll compare the growth rates for all pairs of treatment groups, separately for each cultivar
+
+```{r height-pairwise-by-cultivar}
+emtrends(h1, pairwise ~ treatment | cultivar, var = "day")$contrasts
+```
+
+Here, to save space we only show the pairwise comparisons (the `$contrasts` section) as the `$emtrends` section repeats the one from earlier in this analysis.
+
+If we're interested in comparing the growth rates of the two cultivars, we need to do this separately for each treatment. We can do these comparisons with `emtrends()` by reverting the order in which we specify `treatment` and `cultivar`:
+
+```{r height-pairwise-by-treatment}
 emtrends(h1, pairwise ~ cultivar | treatment, var = "day")
+```
 
+This time we show the full output as the `$emtrends` section now contains the estimated daily growth rates (the daily change in plant height) for each cultivar in each of the treatment groups.
+
+The `$contrasts` section contains compares the daily change in height of the two cultivars for each treatment group. Remember there is only a single pairwise comparison for each treatment group as we only have two cultivars to compare.
+
+We can visualize the last set of comparisons using the `emmip()` function as we did previously, but now we use a different arrangement of the variables in the formula
+
+```{r plot-emtrends-pairwise-comparisons-of-cultivars}
 emmip(h1, cultivar ~ day | treatment, cov.reduce = FALSE, CIs = TRUE)
 ```
+
+**Are any of these pairwise comparisons statistically significant?**  **What does this suggest about the effects of the treatment and the cultivar on the growth rates of the plants?**
+
+# Number of internodes
+
+Exercise for the students.
