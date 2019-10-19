@@ -11,6 +11,8 @@ output:
       collapsed: false
       smooth_scroll: false
     toc_depth: 3
+    includes:
+      in_header: "google-analytics.html"
 ---
 
 # Getting started
