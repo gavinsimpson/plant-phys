@@ -4,16 +4,19 @@ author: Dr. Gavin Simpson and Dr. Maria Davis
 date: October 2019
 output:
   html_document:
+    self_contained: true
     theme: united
     highlight: tango
     toc: true
     toc_float:
       collapsed: false
-      smooth_scroll: false
-    toc_depth: 3
+      smooth_scroll: true
+    toc_depth: 2
     includes:
       in_header: "google-analytics.html"
 ---
+
+#### This file is hosted at: [bit.ly/biol266f19](http://bit.ly/biol266f19)
 
 # Getting started
 
@@ -23,6 +26,7 @@ Once you have logged in, start a **New Project** by clicking the button to the r
 
 ```{r show-new-project-image, echo=FALSE, out.width="800px"}
 knitr::include_graphics("./images/rstudio-cloud-new-project-annotated.png")
+library('cowplot')
 ```
 
 After you click the button, **rstudio.cloud** will deploy a new RStudio instance, which may take a minute or two, so be patient.
@@ -39,7 +43,7 @@ It is good practice to enter your R code into a R script. An R script is a plain
 
 1. you can save the file and all your work as you go along so you have a record of what you did,
 2. it is easier to edit your code and fix errors, mistakes, or typos in the script window, and
-3. you can shre the script file if you need help to track down an error.
+3. you can share the script file if you need help to track down an error.
 
 To start a new script, go to the **File** menu, then select **New File** > **R Script**
 
@@ -65,7 +69,7 @@ install.packages(c('readxl', 'tidyr', 'dplyr', 'forcats', 'ggplot2', 'emmeans'))
 
 This will take a few minutes to complete.
 
-# Load Packages
+## Load Packages
 
 We need to load the packages we just installed so they are ready to use. You need to do this each time you start R and want to use these packages. The installation step you just performed does *not* need to be each time you start R.
 
@@ -79,8 +83,7 @@ library('forcats') # mo mo data processing
 library('ggplot2') # plotting
 library('emmeans') # for post hoc comparisons
 
-## Set plot theme
-theme_set(theme_bw())
+theme_set(theme_bw()) # Set plot theme
 ```
 
 Once you have entered all those lines of code into the script window, move the cursor to the first line or click on it, and then press the following keys:
@@ -94,13 +97,68 @@ From now on, enter the code in the shaded grey boxes into the **Script** window 
 
 *Note that the output in the console **won't** have the* `##`*, these are just to indicate **output** in this document.*
 
+## Upload data
+
+Before we can work with the data from the experiment, we will need to upload them to our **rstudio.cloud** project. Make sure you have downloaded the `f19ph.xlsx` file from UR Courses and that you have it somewhere on your local computer. Next, make sure the **Files** tab is selected in the lower right quarter of the application, and locate the **Upload** button
+
+```{r show-studio-cloud-upload-button, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-upload-button.png")
+```
+
+Click the **Upload** button --- this will bring up the **Upload files** dialogue box
+
+```{r show-studio-cloud-upload-dialog, echo=FALSE, out.width="350px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-upload-dialog.png")
+```
+
+Click the **Choose file** button --- this will bring up the file chooser on your computer. In the file chooser, navigate to where you saved the `f19ph.xlsx` file and open it in the chooser so that the file is listed next to the **Choose file** button, as shown below
+
+```{r show-studio-cloud-upload-dialog-filled, echo=FALSE, out.width="350px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-upload-dialog-filled.png")
+```
+
+Once you have `f19ph.xlsx` showing in the dialogue box, you can click **OK** to upload the file to **rstudio.cloud**.
+
+When you have uploaded the file, your **Files** pane should list the `f19ph.xlsx` file as shown below
+
+```{r show-studio-cloud-upload-complete, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-upload-complete.png")
+```
+
+## Saving your work
+
+At this point, it is worth saving your script. Find the single disk icons in the main menu or the menu for your script
+
+```{r show-studio-cloud-save-script, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-save-script.png")
+```
+
+Click either of these icons to save the file. The first time you do this you'll be prompted to enter a file name --- use something memorable and be sure to give it the extension `.R`. In the image below I named my script `biol266.R`.
+
+```{r show-studio-cloud-save-dialog, echo=FALSE, out.width="350px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-save-script-dialog.png")
+```
+
+Then click **Save**.
+
+Be sure to save your work regularly during class. You can use <kbd>Ctrl</kbd> + <kbd>s</kbd> on Windows and <kbd>Cmd</kbd> + <kbd>s</kbd> on Mac to save changes you make to your script, or click on the disk icon as before.
+
 # Load Data
 
-The data exist in an Excel workbook. The example data are in two of the sheets in this workbook. First we'll read in the data for the wild type cultivar using the `read_excel()` function
+The experimental data exist in `f19ph.xlsx`, an Excel workbook. The example data I'll use here are in two of the sheets in this workbook. *You will need to know what number your sheets are in this file.*
 
-```{r load-data}
-wt <- read_excel('f19ph.xlsx', sheet = 2)
+First we'll read in the data for the wild type cultivar using the `read_excel()` function
+
+```{r load-data, echo = FALSE}
+col_types <- rep(c('text','numeric'), times = c(3, 9))
+wt <- read_excel('f18ph.xls', sheet = 1, col_types = col_types)
 ```
+```{r fake-loading-data, eval = FALSE}
+col_types <- rep(c('text','numeric'), times = c(3, 9))
+wt <- read_excel('f19ph.xlsx', sheet = 2, col_types = col_types)
+```
+
+To avoid reading in incorrect data, we tell `read_excel()` what types of data to expect in each column of the sheet we read in --- there are three text columns, followed by nine columns of numbers.
 
 If there were no errors or messages printed to the screen then the data were loaded into R. Take a look at the data by typing the name of the object (`wt`) and hitting <kbd>Return</kbd>
 
@@ -122,7 +180,7 @@ knitr::include_graphics('./images/original-dfs-tidy.png')
 
 ## Pivoting
 
-We need to convert the data into *long* format and extract the variable and day information from the column names as we do do the conversion. This operation of going from *wide* to *long* (or the reverse) is more commonly known as a *pivot*.
+We need to convert the data into *long* format and extract the variable and day information from the column names as we do the conversion. This operation of going from *wide* to *long* (or the reverse) is more commonly known as a *pivot*.
 
 The first three columns don't contain data (actual measurements). These columns are useful meta data, but we do not need to pivot those columns, so we'll exclude them from the pivot.
 
@@ -155,16 +213,16 @@ wt
 Now we have some new columns in addition to the three columns we *did not* pivot
 
 1. `variable` --- what was measured?
-2. `day` --- when was is measured?
+2. `day` --- when was it measured?
 3. `value` --- what value did you write down for this measurement?
 
-We have one more data processing step to perform to get the require format for the analysis. We want separate columns for the different types of variable we measured. At the moment these are all contained in the single column `variable`. To get the format we want, we need to pivot from this long format back to a wide format, which we do using the `pivot_wider()` function.
-
-As well as the name of the object we want to pivot (`wt`), we have to tell `pivot_wider()` which column contains the information for the new column names (the `names_from` argument), and which column contains the data or values (the `values_from` argument). Remember that the `variable` column contains the names of each variable you measured and the `value` column contains the measurement values.
+We have one more data processing step to perform to get the required format for the analysis. We want separate columns for the different types of variable we measured (`height`, `internodes`, `freshwt`). At the moment these are all contained in the single column `variable`. To get the format we want, we need to pivot from this long format back to a wide format, which we do using the `pivot_wider()` function.
 
 ```{r pivot-wt-wider}
 wt <- pivot_wider(wt, names_from = variable, values_from = value)
 ```
+
+As well as the name of the object we want to pivot (`wt`), we have to tell `pivot_wider()` which column contains the information for the new column names (the `names_from` argument), and which column contains the data or values (the `values_from` argument). Remember that the `variable` column contains the names of each variable you measured and the `value` column contains the measurement values.
 
 Look at the result
 
@@ -180,8 +238,16 @@ To load in the dwarf cultivar data we repeat these steps
 2. pivoting from wide to long format and extracting the variable name and day information from the column headers
 3. pivoting from long to wide format to create a column of data for each of three variables you measured
 
-```{r load-pivot-dwarf}
-dwarf <- read_excel('f19ph.xlsx', sheet = 4)
+```{r fake-loading-pivot-dwarf, eval = FALSE}
+dwarf <- read_excel('f19ph.xlsx', sheet = 4, col_types = col_types)
+dwarf <- pivot_longer(dwarf, -(1:3), names_sep = ':',
+                      names_to = c('variable','day'),
+                      names_ptypes = list(day = integer()))
+dwarf <- pivot_wider(dwarf, names_from = variable, values_from = value)
+dwarf
+```
+```{r load-pivot-dwarf, echo = FALSE}
+dwarf <- read_excel('f18ph.xls', sheet = 4, col_types = col_types)
 dwarf <- pivot_longer(dwarf, -(1:3), names_sep = ':',
                       names_to = c('variable','day'),
                       names_ptypes = list(day = integer()))
@@ -195,8 +261,10 @@ Now that we have the data as we'd like it, we need to stick the two objects toge
 plant <- bind_rows(wt, dwarf)
 ```
 
+So that we can draw growth lines for each individual plant, we need a unique identifier for each plant. We can achieve that by concatenating or pasting together the `cultivar`, `treatment` and `plantid` information, separated by underscores `_`
+
 ```{r plant-id}
-plant <- mutate(plant, id = paste0(cultivar, "_", treatment, "_", plantid))
+plant <- mutate(plant, id = paste(cultivar, treatment, plantid, sep = '_'))
 ```
 
 One final data processing step involves getting the coding for the `treatment` variable right so that the *control* treatment is the reference level against which the other treatments will be compared. Changing the reference level of a factor (a categorical variable) is known as *releveling*. We change the reference levels using
@@ -209,7 +277,7 @@ OK, that's a lot of data processing. Let's look at the data.
 
 # Fresh weight on day 21
 
-We'll start by taking a look at the fresh weight of the plants on day 21. One way to look at these data is as box plots of the weights for each combination of `cultivar` and `treatment`. To plot the data we'll use the powerful **ggplot2** package and the function `ggplot()`. TO draw our plot we need to tell `ggplot()` the following information
+We'll start by taking a look at the fresh weight of the plants on day 21. One way to look at these data is as box plots of the weights for each combination of `cultivar` and `treatment`. To plot the data we'll use the powerful **ggplot2** package and the function `ggplot()`. To draw our plot we need to tell `ggplot()` the following information
 
 1. the name of the object that contains the data we want to plot; in our case this is `plant`
 2. we need to *map* variables in `plant` to the axes and other visual attributes, here `colour`
@@ -227,7 +295,7 @@ ggplot(data = plant, mapping = aes(x = treatment, y = freshwt, colour = cultivar
     labs(y = 'Fresh weight (g)', x = 'Treatment', colour = "Cultivar")
 ```
 
-You can ignore the *warning* about removing some rows with missing data. If you get other warnings or your plot doesn't look similar to the one above, double check your code for typos and if you're still stuck as for help.
+You can ignore the *warning* about removing some rows with missing data. If you get other warnings or your plot doesn't look similar to the one above, double check your code for typos and if you're still stuck ask for help.
 
 Look at the plot you just drew and think about what the data might be telling you about
 
@@ -242,11 +310,51 @@ The way we plotted the data gives us a guide as to how to approach answering the
 1. the various control and treatments applied to the plants, `treatment`, and
 2. the type of cultivar that each plant belongs to.
 
-The model we want to fit is a special case of a linear model that is commonly known as an *analysis of variance* or *ANOVA*. An ANOVA is a model where the independent variables are categorical variables. In R, categorical variables are known as *factors*). Using R we can fit the ANOVA with the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
+The model we want to fit is a special case of a linear model that is commonly known as an *analysis of variance* or *ANOVA*.
+
+### Potential results
+
+It is always worth thinking about the kinds of result we might expect from an statistical analysis. When considering the *fresh weight* data we could think of **four** potential types of result:
+
+```{r anova-hypo-examples, fig.width = 12, fig.height = 7, echo = FALSE, dpi = 120}
+df <- tibble(cultivar = factor(rep(c('wt','dwarf'), each = 4),
+                               levels = c('wt','dwarf')),
+             treatment = factor(rep(c('control','b9','ga10','ga75'), times = 2),
+                                levels = c('control','b9','ga10','ga75')),
+             hypo1 = rep(4, 8),
+             hypo2 = rep(c(8,4), each = 4),
+             hypo3 = rep(c(4,2,6,8), times = 2),
+             hypo4 = c(4,3,6.5,10, 3,1.25,4,5.5))
+labels <- labs(x = NULL, y = 'Fresh weight (g)', colour = 'Cultivar', shape = 'Cultivar')
+leg_hor <- theme(legend.position = 'bottom')
+no_leg  <- theme(legend.position = 'none')
+p1 <- ggplot(df, aes(x = treatment, y = hypo1, colour = cultivar, shape = cultivar)) +
+    geom_point(position = position_dodge(width = 0.5), size = 4) +
+    labels + labs(title = 'No effects') + leg_hor
+p2 <- ggplot(df, aes(x = treatment, y = hypo2, colour = cultivar, shape = cultivar)) +
+    geom_point(position = position_dodge(width = 0.5), size = 4) +
+    labels + labs(title = 'Cultivar effect; no treatment effect') +
+    coord_cartesian(ylim = c(10, 2)) + leg_hor
+p3 <- ggplot(df, aes(x = treatment, y = hypo3, colour = cultivar, shape = cultivar)) +
+    geom_point(position = position_dodge(width = 0.5), size = 4) +
+    labels + labs(title = 'Treatment effect; no cultivar effect') + leg_hor
+p4 <- ggplot(df, aes(x = treatment, y = hypo4, colour = cultivar, shape = cultivar)) +
+    geom_point(position = position_dodge(width = 0.5), size = 4) +
+    labels + labs(title = 'Treatment effect varies with cultivar effect') + leg_hor
+legend <- get_legend(p4)
+pg1 <- plot_grid(p1 + no_leg, p2 + no_leg, p3 + no_leg, p4 + no_leg, ncol = 2, align = 'hv', axis = 'lrtb')
+plot_grid(pg1, legend, nrow = 2, rel_heights = c(1, 0.1))
+```
+
+We will fit an ANOVA that allows for the most complex result --- different treatment effects in the two cultivars --- but we will look at the model output to see if the results are more consistent with one of the other options.
+
+An ANOVA is a model where the independent variables are **categorical** variables. **Categorical** variables are ones where each value is one option from a set of possible values. For example we might have a variable `car_colour` where each value is one from the set `red`, `blue`, `white`, or `black`. Another example might be a variable `river_flow`, taking values `none`, `low`, `medium`, and `high`. There is no implied ordering in car colour variable so we call this a **nominal** categorical variable. Sometimes you might here people call this kind of variable *qualitative*. Where the variable has an implied ordering, like the `river_flow` example, we call those variables **ordinal** categorical variables. These may also be referred to as *semi-quantitative*. In R, categorical variables are known as *factors*.
+
+Using R we can fit the ANOVA with the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
 
     freshwt ~ treatment * cultivar
 
-The response (dependent) variable is on the left hand side of the `~` (the tilde symbol). This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. We want to allow for *different* effects of the various treatments among the two cultivars --- gibberellic acid might affect the dwarf cultivar more than the wild type, for example. To achieve this we in addition to the *main effects* of `treatment` and `cultivar` we need to have the effects of the treatments *interact* with the effects of the cultivar. In R we indicate that we want main effects plus their interaction using the `*` symbol. The only other thing we need to tell R is where to find the variables named in the formula describing the model we want to fit --- we do this using the `data` argument.
+The response (dependent) variable is on the left hand side of the `~` (the tilde symbol). This is the variable we wish to explain. The right hand side of the formula contains the independent variables in the model. We want to allow for *different* effects of the various treatments among the two cultivars --- gibberellic acid might affect the dwarf cultivar more than the wild type, for example. To achieve this in addition to the *main effects* of `treatment` and `cultivar` we need to have the effects of the treatments *interact* with the effects of the cultivar. In R we indicate that we want main effects plus their interaction using the `*` symbol. The only other thing we need to tell R is where to find the variables named in the formula describing the model we want to fit --- we do this using the `data` argument.
 
 Let's fit the ANOVA
 
@@ -271,7 +379,7 @@ This test gives us some gross information about the combined effects of the trea
 
 ## Treatments vs controls
 
-The first test might do is to compare each treatment with the control plants. This involves calculating from the model the *difference* between each level of the treatment and the control. These estimated differences are uncertain so we can express this uncertainty using a confidence interval. Additionally we can do a statistical test of the null hypothesis that the difference is equal to **0** --- which is the same as testing the null hypothesis of equal effects. Because the treatment effect is *nested* within the cultivar effect, we will estimate the difference separately for each cultivar.
+The first test we might do is to compare each treatment with the control plants. This involves calculating from the model the *difference* between each level of the treatment and the control. These estimated differences are uncertain so we can express this uncertainty using a confidence interval. Additionally we can do a statistical test of the null hypothesis that the difference is equal to **0** --- which is the same as testing the null hypothesis of equal effects. Because the treatment effect is *nested* within the cultivar effect, we will estimate the difference separately for each cultivar.
 
 ```{r fw-trt-ctrl-emm}
 fw1mm <- emmeans(fw1, trt.vs.ctrl ~ treatment | cultivar)
@@ -294,15 +402,15 @@ How do you interpret this? Well, the `emmean` columns are the estimated *average
 
 The kind of comparisons we just made are relatively informal. The `$contrasts` part of the output shows results of more formal comparisons with actual statistical tests comparing each treatment with the control. Note that the *p* values have been adjusted to account for there being *three* tests in each cultivar --- this means the results shown account for the uncertainty that arises due to doing multiple tests.
 
-Look at the *p* values. Are any of the comparisons between treatment and control significantly different from 0 (assume a 95% or 0.95 level of confidence)?
+Look back at the *p* values in the output above. **Are any of the comparisons between treatment and control significantly different from 0 (assume a 95% or 0.95 level of confidence)?**
 
-We can plot the estimate marginal means using the `plot()` method, which might make it easier to see what the table of results means:
+We can plot the estimated marginal means using the `plot()` method, which might make it easier to see what the table of results means:
 
 ```{r plot-trt-ctrl-emms}
 plot(fw1mm, comparisons = TRUE)
 ```
 
-The plot shows the values from the `emmean` column as the black points, while the confidence interval is represented by the pale blue bars. The red arrows are *comparison arrows*, which ere added using `comparisons = TRUE`. Take a pair of points; whether the arrows overlap is an *approximate* indication of whether, at the 95% or 0.95 level, the pair of points are *significantly different from one another*. If the arrows *do not* overlap for a pair of points we can conclude that the mean fresh weight of the plants is different between the pair of treatments.
+The plot shows the values from the `emmean` column as the black points, while the confidence interval is represented by the pale blue bars. The red arrows are *comparison arrows*, which were added using `comparisons = TRUE`. Take any pair of points; whether the arrows overlap is an *approximate* indication of whether, at the 95% or 0.95 level, the pair of points are *significantly different from one another*. If the arrows *do not* overlap for a pair of points we can conclude that the mean fresh weight of the plants is different between the pair of treatments.
 
 ## Pairwise comparisons
 
@@ -349,7 +457,98 @@ We also draw the data for the two cultivars in it's own panel, which *ggplot* ca
 
 ## ANCOVA
 
-The model we are fitting is sometimes called an *analysis of covariance* or ANCOVA, which is another special case of a linear model that can also be fitted using the `lm()` function. We specify the model structure using a symbolic formula. The formula we'll use is
+The model we are fitting is sometimes called an *analysis of covariance* or ANCOVA, which is another special case of a linear model that can also be fitted using the `lm()` function. In an ANCOVA, we *control* for the effects of a continuous variable whilst interest is on a categorical treatment effect.
+
+### Potential results
+
+As before, it is helpful to think about the kinds of result we might expect from the statistical analysis. When considering the *plan height* data we could think of **five** basic types of result:
+
+```{r ancova-hypo-examples, fig.width = 12, fig.height = 10.5, echo = FALSE, dpi = 120}
+df <- crossing(##cultivar  = factor(c('wt','dwarf'), levels = c('wt','dwarf')),
+               day       = c(0,7,14,21),
+               treatment = factor(c('control','b9','ga10','ga75'),
+                                  levels = c('control','b9','ga10','ga75')))
+f1 <- function(df) {
+    rep(4, nrow(df))
+}
+f2 <- function(df) {
+    rep(4, nrow(df)) + (1.5 * df$day)
+}
+f3 <- function(df) {
+    x <- df$treatment
+    treat_eff <- case_when(
+        x == 'control' ~ 0,
+        x == 'b9'      ~ -4,
+        x == 'ga10'    ~ +4,
+        x == 'ga75'    ~ +8)
+    rep(4, nrow(df)) + (1.5 * df$day) + treat_eff
+}
+f4 <- function(df) {
+    x <- df$treatment
+    treat_eff <- case_when(
+        x == 'control' ~ 0,
+        x == 'b9'      ~ -4,
+        x == 'ga10'    ~ +4,
+        x == 'ga75'    ~ +8)
+    interact <- case_when(
+        x == 'control' ~ 0,
+        x == 'b9'      ~ -1,
+        x == 'ga10'    ~ +1,
+        x == 'ga75'    ~ +2)
+    rep(4, nrow(df)) + (1.5 * df$day) + treat_eff + (interact * df$day)
+}
+f5 <- function(df) {
+    x <- df$treatment
+    treat_eff <- case_when(
+        x == 'control' ~ 0,
+        x == 'b9'      ~ -2,
+        x == 'ga10'    ~ +2,
+        x == 'ga75'    ~ +4)
+    rep(4, nrow(df)) + (0 * df$day) + treat_eff
+}
+
+df <- mutate(df,
+             hypo1 = f1(df),
+             hypo2 = f2(df),
+             hypo3 = f3(df),
+             hypo4 = f4(df),
+             hypo5 = f5(df))
+
+labels <- labs(x = NULL, y = 'Height (mm)', colour = 'Treatment')
+leg_hor <- theme(legend.position = 'bottom')
+no_leg  <- theme(legend.position = 'none')
+p1 <- ggplot(df, aes(x = day, y = hypo1, colour = treatment)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labels + labs(title = 'No effects') + leg_hor
+p2 <- ggplot(df, aes(x = day, y = hypo2, colour = treatment)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labels + labs(title = 'Day effect; no treatment effect') + leg_hor
+p3 <- ggplot(df, aes(x = day, y = hypo3, colour = treatment)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labels + labs(title = 'Additive Day and Treatment effects') + leg_hor
+p4 <- ggplot(df, aes(x = day, y = hypo4, colour = treatment)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labels + labs(title = 'Day effect varies with treatment') + leg_hor
+p5 <- ggplot(df, aes(x = day, y = hypo5, colour = treatment)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labels + labs(title = 'Treatment effect; no day effect') + leg_hor
+legend <- get_legend(p5)
+pg1 <- plot_grid(p1 + no_leg, p2 + no_leg, p5 + no_leg, p3 + no_leg, p4 + no_leg,
+                 ncol = 2, align = 'hv', axis = 'lrtb')
+plot_grid(pg1, legend, nrow = 2, rel_heights = c(1, 0.1))
+```
+
+In addition, *some* or *all* of the above effects could be either
+
+* the same in both the wild-type and dwarf mutant cultivars, or
+* they could differ between the wild-type and the dwarf mutant cultivars.
+
+We specify the model structure using a symbolic formula. The formula we'll use is
 
     height ~ day * treatment * cultivar
 
@@ -373,7 +572,7 @@ Most of this isn't very helpful in this state, except the omnibus *F* test which
 
 ## Treatments vs controls
 
-To get more interpretable output we will again use estimate marginal means, but with one slight difference; this time we are interested in the linear effect of `day`, a continuous variable, as well as the treatment and cultivar effects. The `day` effect will be represented by straight lines (regression lines), the slopes of which reflect the average growth rate of plants in the combinations of treatments and cultivars. These lines are often called *trends*, and hence we use the `emtrends()` function to estimate the marginal trends instead of the marginal means.
+To get more interpretable output we will again use estimate marginal means, but with one slight difference; this time we are interested in the linear effect of `day`, a continuous variable, as well as the treatment and cultivar effects. The `day` effect will be represented by straight lines (regression lines), the slopes of which reflect the average growth rate of plants in the combinations of treatments and cultivars. These lines are often called *trends* hence we use the `emtrends()` function to estimate the marginal trends instead of the marginal means.
 
 As before we will start by comparing the treated plants with the control plants. This time however we need to indicate the *trend* variable via argument `var`. In our case the trend variable is `day` (which is indicated by the name in quotes)
 
@@ -447,3 +646,37 @@ emmip(h1, cultivar ~ day | treatment, cov.reduce = FALSE, CIs = TRUE)
 # Number of internodes
 
 Exercise for the students.
+
+# Logging Off
+
+Your work will be saved in your **rstudio.cloud** workspace for some time after the lab. You will be able to resume from where you left off if you log in to your workspace at a late time. To be sure that the latest state of your work is saved, it would be best to log out of **rstudio.cloud** at the end of class today.
+
+Locate your user name in the top right of the screen
+
+```{r show-studio-cloud-logout-1, echo=FALSE, out.width="250px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-logout-1.png")
+```
+
+Click your user name to open the menu
+
+```{r show-studio-cloud-logout-2, echo=FALSE, out.width="500px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-logout-2.png")
+```
+
+Click "Log out" to securely log out of **rstudio.cloud**.
+
+
+# Final thoughts
+
+The statistical models shown here are intended to give you a flavour of the sorts of analysis that could be applied to these data. The analysis is necessarily incomplete and simplified because
+
+1. we don't have time in a single lab class to go through all the model evaluation we would need to do to assure ourselves that the inferences --- the estimates from the models and associated intervals and *p* values --- are valid and do not violate the assumptions of the methods we used, and
+2. the statistical methods needed to fully analyze these data require techniques you won't begin to cover until you take BIOL 440 *Modelling Biological Data* with Dr. Mark Vanderwel.
+
+Aspects of the data that we haven't considered or simply ignored are:
+
+1. What if the growth of the plants is non-linear? Our models assumed linear growth but if the growth appears to speed up or slow down over the course of the experiment, our model will give biased estimates of the growth rates.
+
+2. We assumed that the individual measurements were independent of one another. However, you repeatedly measured the same plants, within your groups, over the course of the experiment. The observations for any one plant are, all else being equal, more likely to be similar to one another than they are to another plant. The result of repeatedly measuring the same individuals over time is that we have **fewer** observations than is implied by the number of rows in the data set. We would need to use a repeated measures ANOVA or, better still, a mixed modelling approach to account for the lack of independence. If you take BIOL 440 with Dr. Vanderwel you will learn about mixed models.
+
+3. Variables such a plant height and fresh weight are continuous variables. They also have a fixed zero point --- you can't have a plant with negative height or weight (in fact you can't measure a plant with *zero* height or weight either!). Data like this have what we call a *non-constant mean-variance relationship* --- as we increase in height or weight we expect the variation about the mean or expected value to increase. Think about it, if we had a zero height plant there is no variation about that value as there is no plant. Hence as we increase height or weight the spread of the data must increase. This is known as *heteroscedasticity*. Also, we could extrapolate from our linear models and predict negative weight and height plants, which doesn't make sense. The class of models called **generalized linear models** would allow us to handle these features of the data. You'll learn about these models too if you take BIOL 440!
