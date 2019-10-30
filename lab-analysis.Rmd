@@ -647,6 +647,48 @@ emmip(h1, cultivar ~ day | treatment, cov.reduce = FALSE, CIs = TRUE)
 
 Exercise for the students.
 
+# Exporting images & files
+
+To save a plot to a file, click on the **Plots** tab in the lower right window, and use the arrow icons to page through the plots to the one you want. Then click the **Export**
+
+```{r show-studio-cloud-export-1, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-export-button.png")
+```
+
+From the menu that appears choose **Save as Image...**
+
+```{r show-studio-cloud-export-2, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-export-image.png")
+```
+
+This brings up the **Save Plot as Image** dialogue box. Make the following changes:
+
+1. In the *Image format* box, select **PNG**
+2. In the *File name* box enter the file name you want for the image, include the `.png` extension
+3. Change the height and width to suit
+    * You can set the height and width in pixel in the boxes to the top right of the dialogue box. If you change these you need to click the *Update Preview* button to redraw the plot
+	* Alternatively, you can use the hotspot to the bottom right corner of the plot to drag to resize. Click the *Update Preview* button to redraw the plot to the desired size
+
+```{r show-studio-cloud-export-3, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-export-image-dialog.png")
+```
+
+When you have made the required changes, click **Save**.
+
+To export saved images or your script to your local machine, select the **Files** tab in the lower right window
+
+```{r show-studio-cloud-export-4, echo=FALSE, out.width="750px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-export-files.png")
+```
+
+Check the boxes next to the files you wish to export (download) as shown above, and then click the **More** button in the menu and select the **Export...** option.
+
+```{r show-studio-cloud-export-5, echo=FALSE, out.width="300px"}
+knitr::include_graphics("./images/rstudio-cloud-screen-export-files-dialog.png")
+```
+
+Enter a filename --- if you are exporting more than one file, *RStudio* will compress all the files into a single ZIP archive --- if needed, but the provided name should be OK. Then click **Download** to download the file or the ZIP archive.
+
 # Logging Off
 
 Your work will be saved in your **rstudio.cloud** workspace for some time after the lab. You will be able to resume from where you left off if you log in to your workspace at a late time. To be sure that the latest state of your work is saved, it would be best to log out of **rstudio.cloud** at the end of class today.
